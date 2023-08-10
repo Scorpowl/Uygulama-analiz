@@ -203,7 +203,28 @@ df = rare_encoder(df, 0.01)
 ohe_cols = [col for col in df.columns if 10 >= df[col].nunique() > 2]
 df = one_hot_encoder(df, ohe_cols)
 
-for col in binary_cols:
-    df = label_encoder(df, col)
+cat_cols, num_cols, cat_but_car = grab_col_names(df)
+useless_cols = [col for col in df.columns if df[col].nunique() == 2 and
+                (df[col].value_counts() / len(df) < 0.01).any(axis=None)]
 
-print(df)
+
+y = df["SURVIVED"]
+X = df.drop(["PASSENGERID", "SURVIVED"], axis=1)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=17)
+
+from sklearn.ensemble import RandomForestClassifier
+
+rf_model = RandomForestClassifier(random_state=46).fit(X_train, y_train)
+y_pred = rf_model.predict(X_test)
+print(accuracy_score(y_pred, y_test))
+
+dff = load()
+dff.dropna(inplace=True)
+dff = pd.get_dummies(dff, columns=["Sex", "Embarked"], drop_first=True)
+y = dff["Survived"]
+X = dff.drop(["PassengerId", "Survived", "Name", "Ticket", "Cabin"], axis=1)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=17)
+rf_model = RandomForestClassifier(random_state=46).fit(X_train, y_train)
+y_pred = rf_model.predict(X_test)
+print(accuracy_score(y_pred, y_test))
